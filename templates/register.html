@@ -1,0 +1,39 @@
+{% extends "vorlage/main.html" %}
+
+{% block content %}
+
+<div class="container">
+<h3>Registrierung!</h3>
+    <form action="/register" method="post">
+    <div class="registerForm">
+        <div class="col-auto">
+            <label for="vorname" class="form-label">Vorname</label>
+            <input type="text" class="form-control" id="vorname" name="vorname" required value="{{ fName }}">
+        </div>
+        <div class="column">
+            <label for="nachname" class="form-label">Nachname</label>
+            <input type="text" class="form-control" id="nachname" name="nachname" value="{{ lName }}">
+        </div>
+        <div class="column">
+            <label for="exampleInputEmail1" class="form-label">E-Mail-Adresse</label>
+            <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"
+                   name="email" required value="{{ email }}">
+        </div>
+        <div class="column">
+            <label for="passwort" class="form-label">Passwort</label>
+            <input type="password" class="form-control" id="passwort" name="passwort" required>
+        </div>
+        <div class="column">
+            <label for="passwortWDH" class="form-label">Passwort (Wiederholung)</label>
+            <input type="password" class="form-control" id="passwortWDH" name="passwortWDH" required>
+        </div>
+        <div class="column">
+            <label for="alter" class="form-label">Alter</label>
+            <input type="number" class="form-control" id="alter" size="3" name="alter" value="{{ age }}">
+        </div>
+
+</div>
+    <button type="submit" class="btn btn-primary">Registrieren!</button>
+    </form>
+</div>
+{% endblock %}
