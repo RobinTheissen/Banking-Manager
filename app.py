@@ -2,6 +2,9 @@ from datetime import timedelta
 from data.customer import Customer
 from flask import Flask, render_template, request, session
 import json
+import psycopg2
+import os
+
 
 app = Flask(__name__)
 app.permanent_session_lifetime = timedelta(minutes=60)  # sets the time for data stored to 60 minutes
@@ -16,15 +19,27 @@ def index():  # Startseite
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    error = ""
-    if request.method == "POST":
-        data = request.form
-        customer = Customer(
-            data.get("vorname"),
-            data.get("nachname"),
-            data.get("alter"),
-            data.get("email"),
-            data.get("passwort"),
-            data.get("bankingInst"))
+    if request.method == 'POST':
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
+        email = request.form['email']
+        password = request.form['password']
+        age = request.form['age']
+        bankinginstitution = request.form['bankinginstitution']
 
-    return render_template("register.html", error=error)  # on server validation error
+        conn = psycopg2.connect(
+            host='localhost',
+            database='postgres',
+            user=os.environ["DB_USERNAME"],
+            password=os.environ["DB_PASSWORD"]
+        )
+
+        cur = conn.cursor()
+        cur.execute('INSERT INTO users (firstname, lastname, email, password, age, bankinginstitution)'
+                    'VALUES (%s, %s, %s, %s, %s, %s)',
+                    (firstname, lastname, email, password, age, bankinginstitution))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    return render_template("register.html")  # on server validation error
