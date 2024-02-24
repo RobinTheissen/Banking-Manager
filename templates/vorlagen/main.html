@@ -8,8 +8,25 @@
     <title>Banking-Manager</title>
 </head>
 <body>
+<div class="navigation">
+    <nav>
+        <p>Firma Bagga</p>
+        <a href="./"> Startseite </a>
+        <a href="./profile"> Profil </a>
+    <!-- if statement removes login and register hyperlink if a user is logged in -->
+    {% if session['customer'] == None %}
+        <a href="./login"> Login </a>
+        <a href="./register"> Registrieren </a>
+    {% endif %}
+    <!-- if statement enables logout page in navbar if user is logged in -->
+    {% if session['customer'] != None %}
+        <a href="./logout"> Logout </a>
+    {% endif %}
+    </nav>
+
     <div class="content">
-            {% block content %}{% endblock %}
-        </div>
+        {% block content %}{% endblock %}
+    </div>
+</div>
 </body>
 </html>

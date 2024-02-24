@@ -1,0 +1,22 @@
+{% extends "vorlagen/main.html"  %}
+
+{% block content %}
+<div>
+    <h1>Login</h1>
+    <form action="/login" method="POST">
+        <label for="email"></label>
+            <input type="email" name="email" id="email" placeholder="E-Mail-Adresse" value="{{ request.form.email }}" required />
+        <br/><br/>
+        <label for="password"></label>
+            <input type="password" name="password" id="password" placeholder="Passwort" value="{{ request.form.password }}" required />
+        <br/><br/>
+
+        <input class="button"  type="submit" value="LOGIN" />
+    </form>
+<!-- error happens if the login information did not match any user -->
+    {% if error %}
+        <p class="error"> {{ error }}
+    {% endif %}
+</div>
+
+{% endblock %}
