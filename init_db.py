@@ -20,6 +20,23 @@ cur.execute('CREATE TABLE IF NOT EXISTS customers'
             'bankingInstitution VARCHAR(100));'
             )
 
+cur.execute('CREATE TABLE IF NOT EXISTS accounts'
+            '(accountId SERIAL PRIMARY KEY,'
+            'accountName VARCHAR(30),'
+            'customerId INTEGER,'
+            'FOREIGN KEY (customerId) REFERENCES customers(customerId));'
+            )
+
+cur.execute('CREATE TABLE IF NOT EXISTS transactions'
+            '(transactionId SERIAL PRIMARY KEY,'
+            'timestamp TIMESTAMP NOT NULL,'
+            'amount DECIMAL(10, 2) NOT NULL,'
+            'recipient VARCHAR(30) NOT NULL,'
+            'description VARCHAR(100),'
+            'accountId INTEGER NOT NULL,'
+            'FOREIGN KEY (accountId) REFERENCES accounts(accountId));'
+            )
+
 conn.commit()
 
 cur.close()

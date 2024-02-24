@@ -12,7 +12,6 @@
     <nav>
         <p>Firma Bagga</p>
         <a href="./"> Startseite </a>
-        <a href="./profile"> Profil </a>
     <!-- if statement removes login and register hyperlink if a user is logged in -->
     {% if session['customer'] == None %}
         <a href="./login"> Login </a>
@@ -20,6 +19,8 @@
     {% endif %}
     <!-- if statement enables logout page in navbar if user is logged in -->
     {% if session['customer'] != None %}
+        <a href="./transaction"> Transaktionen </a>
+        <a href="./create_account"> Konto anlegen </a>
         <a href="./logout"> Logout </a>
     {% endif %}
     </nav>
