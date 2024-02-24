@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from data.customer import Customer
 from flask import Flask, render_template, request, session, redirect, url_for
 import json
@@ -15,7 +15,6 @@ app.secret_key = 'geheim'
 def index():  # Startseite
     customer_name = ""
     if request.method == 'POST':
-        print(session['customer'])
         if session['customer']:
             customer_name = session['customer'][0] + " " + session['customer'][1]
             session['customer'] = None
@@ -114,9 +113,12 @@ def login_page():
         cur.execute('SELECT * FROM customers WHERE email = %s AND password = %s',
                     (login_email, login_password))
         existing_customer = cur.fetchone()[1:]
+
+        cur.close()
+        conn.close()
+
         if existing_customer:
             session['customer'] = existing_customer
-            print(session['customer'])
             return redirect(url_for('success_page'))
         else:
             error = 'Bitte überprüfe die eingegebenen Daten'
@@ -130,3 +132,82 @@ def logout_page():
         return render_template('index.html')
     else:
         return render_template('logout.html')
+
+
+@app.route('/create_account', methods=['GET', 'POST'])
+def create_account():
+    if request.method == 'POST':
+        conn = psycopg2.connect(
+            host='localhost',
+            database='postgres',
+            user=os.environ["DB_USERNAME"],
+            password=os.environ["DB_PASSWORD"]
+        )
+
+        cur = conn.cursor()
+        print(session['customer'])
+
+        cur.execute('SELECT customerId FROM customers WHERE email = %s', (session['customer'][2],))
+        customerId = cur.fetchone()[0]
+        print(customerId)
+
+        cur.execute('insert into accounts (accountname, customerid)'
+                    ' values (%s, %s)',
+                    (request.form['accountName'], customerId),
+                    )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect(url_for('create_account'))
+
+    return render_template('create_account.html')
+
+
+@app.route('/transaction', methods=['GET', 'POST'])
+def add_transaction():
+    if request.method == 'POST':
+        # Benutzerdaten aus dem Formular abrufen
+        account_id = request.form.get('accountSelect')
+        amount = request.form.get('amount')
+        recipient = request.form.get('recipient')
+        description = request.form.get('description')
+
+        # Verbindung zur Datenbank herstellen
+        conn = psycopg2.connect(
+            host='localhost',
+            database='postgres',
+            user=os.environ["DB_USERNAME"],
+            password=os.environ["DB_PASSWORD"]
+        )
+        cur = conn.cursor()
+        timestamp = datetime.now()
+        # Transaktion in die Datenbank einfügen
+        cur.execute('INSERT INTO transactions (accountid, timestamp, amount, recipient, description) VALUES (%s, %s, %s, %s, %s)',
+                    (account_id, timestamp, amount, recipient, description))
+
+        # Verbindung schließen und Änderungen speichern
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect(url_for('add_transaction'))
+
+    # Verbindung zur Datenbank herstellen, um Konten abzurufen
+    conn = psycopg2.connect(
+        host='localhost',
+        database='postgres',
+        user=os.environ["DB_USERNAME"],
+        password=os.environ["DB_PASSWORD"]
+    )
+    cur = conn.cursor()
+
+    # Konten aus der Datenbank abrufen
+    cur.execute('SELECT accountid, accountname FROM accounts')
+    accounts_data = cur.fetchall()
+
+    # Verbindung schließen
+    cur.close()
+    conn.close()
+
+    return render_template('transaction.html', accounts=accounts_data)

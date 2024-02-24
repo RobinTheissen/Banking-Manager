@@ -1,0 +1,9 @@
+{% extends "vorlagen/main.html" %}
+
+{% block content %}
+    <form action="/create_account" method="POST">
+        <label for="accountName">Kontoname:</label>
+        <input type="text" id="accountName" name="accountName" required>
+        <button type="submit">Konto erstellen</button>
+    </form>
+{% endblock %}

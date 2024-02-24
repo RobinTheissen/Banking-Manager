@@ -1,0 +1,14 @@
+{% extends "vorlagen/main.html" %}
+
+{% block content %}
+    <h1>Account Information</h1>
+
+<ul>
+    {% for account in accounts %}
+        <li>{{ account[1] }} (ID: {{ account[0] }})</li>
+    {% endfor %}
+</ul>
+
+<a href="/accounts/add_transaction">Transaktion hinzufügen</a>
+
+{% endblock %}

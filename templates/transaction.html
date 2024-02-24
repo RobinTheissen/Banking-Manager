@@ -1,0 +1,28 @@
+{% extends "vorlagen/main.html" %}
+
+{% block content %}
+<h1>Add Transaction</h1>
+
+<form action="/transaction" method="post">
+    <label for="accountSelect">Wähle ein Konto:</label>
+    <select id="accountSelect" name="accountSelect">
+        {% for account in accounts %}
+            <option value="{{ account[0] }}">{{ account[1] }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label for="amount">Betrag:</label>
+    <input type="text" id="amount" name="amount" required><br>
+
+    <label for="recipient">Empfänger:</label>
+    <input type="text" id="recipient" name="recipient" required><br>
+
+    <label for="description">Beschreibung:</label>
+    <textarea id="description" name="description" required></textarea><br>
+
+    <input type="submit" value="Transaktion hinzufügen">
+</form>
+
+<a href="/accounts">Zurück zu den Konten</a>
+
+{% endblock %}
