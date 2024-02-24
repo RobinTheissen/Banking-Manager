@@ -1,3 +1,6 @@
+{% extends "vorlagen/main.html" %}
+
+{% block content %}
 
 <div class="container">
 <h3>Registrierung!</h3>
@@ -26,14 +29,19 @@
         </div>
         <div class="column">
             <label for="age" class="form-label">Alter</label>
-            <input type="number" class="form-control" id="age" size="3" name="age" value="{{ age }}">
+            <input type="number" class="form-control" id="age" size="3" name="age">
         </div>
         <div class="column">
             <label for="bankinginstitution" class="form-label">Bankinstitution</label>
-            <input type="text" class="form-control" id="bankinginstitution" name="bankinginstitution" required>
+            <input type="text" class="form-control" id="bankinginstitution" name="bankinginstitution" >
         </div>
 
 </div>
     <button type="submit" class="btn btn-primary">Registrieren!</button>
     </form>
 </div>
+<!-- error if a user with this email address already exists -->
+    {% if error %}
+        <p class="error"> {{ error }}
+    {% endif %}
+{% endblock %}

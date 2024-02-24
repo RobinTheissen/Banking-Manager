@@ -10,8 +10,8 @@ conn = psycopg2.connect(  # establishes connection to database
 
 cur = conn.cursor()
 
-cur.execute('CREATE TABLE IF NOT EXISTS users' 
-            '(userId SERIAL PRIMARY KEY,'
+cur.execute('CREATE TABLE IF NOT EXISTS customers' 
+            '(customerId SERIAL PRIMARY KEY,'
             'firstName VARCHAR(50),'
             'lastName VARCHAR(100),'
             'email VARCHAR(100),'
