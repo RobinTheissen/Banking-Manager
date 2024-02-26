@@ -3,12 +3,16 @@
 {% block content %}
     <h1>Account Information</h1>
 
-<ul>
-    {% for account in accounts %}
-        <li>{{ account[1] }} (ID: {{ account[0] }})</li>
-    {% endfor %}
-</ul>
+<form action="/accounts" method="post">
+    <label for="accountSelect">Wähle ein Konto:</label>
+    <select id="accountSelect" name="accountSelect">
+        {% for account in accounts %}
+            <option value="{{ account[0] }}">{{ account[1] }}</option>
+        {% endfor %}
+    </select><br>
 
-<a href="/accounts/add_transaction">Transaktion hinzufügen</a>
+
+    <input type="submit" value="Transaktion hinzufügen">
+</form>
 
 {% endblock %}
