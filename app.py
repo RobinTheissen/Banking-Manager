@@ -73,6 +73,9 @@ def register():
                         (customer.fName, customer.lName, customer.email, customer.pw, customer.age,
                          customer.bankingInst))
             conn.commit()
+            cur.execute('SELECT customerid FROM customers WHERE email = %s',
+                        (customer.email,))
+            customer_id = cur.fetchone()[0]
 
         cur.close()
         conn.close()
@@ -82,17 +85,11 @@ def register():
             return render_template("register.html", error=error)
         # Erfolgreich registriert, leite den Benutzer zu einer anderen Seite weiter
         else:
-            session['customer'] = [customer.fName, customer.lName, customer.email, customer.pw, customer.age,
+            session['customer'] = [customer_id, customer.fName, customer.lName, customer.email, customer.pw, customer.age,
                                    customer.bankingInst]
-            return redirect(url_for('accounts'))
+            return redirect(url_for('create_account'))
 
     return render_template("register.html")
-
-
-@app.route('/success', methods=['GET', 'POST'])
-def success_page():
-    print(session['customer'])
-    return render_template('success.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -119,7 +116,6 @@ def login_page():
 
         if existing_customer:
             session['customer'] = existing_customer
-            print(session['customer'])
             return redirect(url_for('accounts'))
         else:
             error = 'Bitte überprüfe die eingegebenen Daten'
@@ -165,6 +161,22 @@ def create_account():
 
 @app.route('/transaction', methods=['GET', 'POST'])
 def add_transaction():
+    # Verbindung zur Datenbank herstellen
+    conn = psycopg2.connect(
+        host='localhost',
+        database='postgres',
+        user=os.environ["DB_USERNAME"],
+        password=os.environ["DB_PASSWORD"]
+    )
+    cur = conn.cursor()
+
+    cur.execute('SELECT accountid, accountname FROM accounts WHERE customerid = %s', (session['customer'][0],))
+    accounts_data = cur.fetchall()
+
+    if not accounts_data:
+        error = "Bitte neues Konto hinzufügen."
+        return render_template('create_account.html', error=error)
+
     if request.method == 'POST':
         # Benutzerdaten aus dem Formular abrufen
         account_id = request.form.get('accountSelect')
@@ -172,15 +184,7 @@ def add_transaction():
         recipient = request.form.get('recipient')
         description = request.form.get('description')
 
-        # Verbindung zur Datenbank herstellen
-        conn = psycopg2.connect(
-            host='localhost',
-            database='postgres',
-            user=os.environ["DB_USERNAME"],
-            password=os.environ["DB_PASSWORD"]
-        )
-        cur = conn.cursor()
-        timestamp = datetime.now()
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         amount = amount.replace(',', '.')
         # Transaktion in die Datenbank einfügen
@@ -214,6 +218,7 @@ def add_transaction():
 
     return render_template('transaction.html', accounts=accounts_data)
 
+
 @app.route('/accounts', methods=['GET', 'POST'])
 def accounts():
     # Verbindung zur Datenbank herstellen, um Konten abzurufen
@@ -226,18 +231,66 @@ def accounts():
     cur = conn.cursor()
 
     # Konten aus der Datenbank abrufen
-    cur.execute('SELECT accountid, accountname FROM accounts')
+    cur.execute('SELECT accountid, accountname FROM accounts WHERE customerid = %s',(session['customer'][0],))
     accounts_data = cur.fetchall()
 
+    if not accounts_data:
+        error = "Bitte neues Konto hinzufügen."
+        return render_template('create_account.html', error=error)
+
     cur.execute(
-        'SELECT accounts.accountname, transactions.timestamp, transactions.amount, transactions.recipient, '
-        'transactions.description FROM accounts, transactions WHERE accounts.customerid = %s '
-        'AND accounts.accountid = transactions.accountid ORDER BY transactions.timestamp DESC LIMIT 5',
-        (session['customer'][0],))
-    last_five = cur.fetchall()
-    print(last_five)
+        "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
+        "transactions.amount, transactions.recipient, transactions.description "
+        "FROM accounts, transactions "
+        "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
+        "ORDER BY transactions.timestamp DESC LIMIT %s",
+        (session['customer'][0], 5))
+
+    transactions = cur.fetchall()
     # Verbindung schließen
     cur.close()
     conn.close()
 
-    return render_template('accounts.html', accounts=accounts_data)
+    return render_template('accounts.html', accounts=accounts_data, transactions=transactions)
+
+
+@app.route('/update_table', methods=['GET'])
+def update_table():
+    limit = request.args.get('limit', 5)  # Standardwert von 5, wenn keine Grenze angegeben ist
+
+    conn = psycopg2.connect(
+        host='localhost',
+        database='postgres',
+        user=os.environ["DB_USERNAME"],
+        password=os.environ["DB_PASSWORD"]
+    )
+    cur = conn.cursor()
+
+    # Wenn kein Limit angegeben ist, alle Transaktionen abrufen
+    if limit == "all":
+        cur.execute(
+            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') "
+            "AS formatted_timestamp,"
+            "transactions.amount, transactions.recipient, transactions.description "
+            "FROM accounts, transactions "
+            "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
+            "ORDER BY transactions.timestamp DESC",
+            (session['customer'][0],))
+    else:
+        cur.execute(
+            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') "
+            "AS formatted_timestamp, "
+            "transactions.amount, transactions.recipient, transactions.description "
+            "FROM accounts, transactions "
+            "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
+            "ORDER BY transactions.timestamp DESC LIMIT %s",
+            (session['customer'][0], limit))
+
+    transactions = cur.fetchall()
+
+    # Verbindung schließen
+    cur.close()
+    conn.close()
+
+    table_html = render_template('table_fragment.html', transactions=transactions)
+    return table_html

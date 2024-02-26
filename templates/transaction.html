@@ -23,7 +23,7 @@
 
     <input type="submit" value="Transaktion hinzufügen">
 </form>
-
-<a href="/accounts">Zurück zu den Konten</a>
-
+{% if error %}
+        <H2 class="error"> {{ error }}</H2>
+{% endif %}
 {% endblock %}

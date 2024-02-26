@@ -1,0 +1,19 @@
+<table class="center" border="1">
+    <tr>
+        <th>Konto</th>
+        <th>Datum</th>
+        <th>Empfänger</th>
+        <th>Verwendungszweck</th>
+        <th>Betrag</th>
+    </tr>
+
+    {% for row in transactions %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] }}</td>
+            <td>{{ row[2] }}</td>
+        </tr>
+    {% endfor %}
+</table>
