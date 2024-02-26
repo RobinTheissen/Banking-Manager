@@ -1,14 +1,100 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
-    <h1>Account Information</h1>
+    <h1>Letzte Transaktionen</h1>
 
-<ul>
-    {% for account in accounts %}
-        <li>{{ account[1] }} (ID: {{ account[0] }})</li>
-    {% endfor %}
-</ul>
+    {% set limit=5 %}
+    <style>
+        /* Ungerade Zeilen */
+        #transactionTable tr:nth-child(odd) {
+            background-color: #9393a2;  /* Farbe für ungerade Zeilen */
+        }
 
-<a href="/accounts/add_transaction">Transaktion hinzufügen</a>
+        /* Gerade Zeilen */
+        #transactionTable tr:nth-child(even) {
+            background-color: #e1dddd;  /* Farbe für gerade Zeilen */
+        }
+    </style>
+    <script>
+        let limit = {{ limit }};
 
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('increase15').addEventListener('click', function() {
+                limit += 15;
+                updateTable();
+            });
+
+            document.getElementById('show_all').addEventListener('click', function() {
+                limit = "all";
+                updateTable();
+            });
+
+            function updateTable() {
+            fetch(`/update_table?limit=${limit}`)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('transactionTable').innerHTML = data.replace(/\\n/g, '');
+                });
+            }
+        });
+    </script>
+
+{%if limit == null %}
+    <div id="transactionTable">
+        <table class="center" border="1">
+            <tr>
+                <th>Konto</th>
+                <th>Datum</th>
+                <th>Empfänger</th>
+                <th>Verwendungszweck</th>
+                <th>Betrag</th>
+            </tr>
+                {% for row in transactions %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[2] }}</td>
+                </tr>
+                {% endfor %}
+        </table>
+    </div>
+{% else %}
+    <div id="transactionTable">
+        <table class="center" border="1">
+        <tr>
+                <th>Konto</th>
+                <th>Datum</th>
+                <th>Empfänger</th>
+                <th>Verwendungszweck</th>
+                <th>Betrag</th>
+            </tr>
+            {% for row in transactions[:limit] %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[2] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endif %}
+    <form>
+        <input type="button" id="increase15" value="+ 15">
+        <input type="button" id="show_all" value="Alle anzeigen">
+    </form>
+
+    <br>
+    <br>
+    <form action="/accounts" method="post">
+        <label for="accountSelect">Wähle ein Konto:</label>
+        <select id="accountSelect" name="accountSelect">
+            {% for account in accounts %}
+                <option value="{{ account[0] }}">{{ account[1] }}</option>
+            {% endfor %}
+        </select><br>
+    </form>
 {% endblock %}

@@ -6,4 +6,7 @@
         <input type="text" id="accountName" name="accountName" required>
         <button type="submit">Konto erstellen</button>
     </form>
+    {% if error %}
+        <H2 class="error"> {{ error }}</H2>
+    {% endif %}
 {% endblock %}
