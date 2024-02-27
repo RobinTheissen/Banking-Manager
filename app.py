@@ -116,7 +116,7 @@ def login_page():
 
         if existing_customer:
             session['customer'] = existing_customer
-            return redirect(url_for('accounts'))
+            return redirect(url_for('accounts', initial=True))
         else:
             error = 'Bitte überprüfe die eingegebenen Daten'
             return render_template('login.html', error=error)
@@ -143,8 +143,9 @@ def create_account():
 
         cur = conn.cursor()
 
-        cur.execute('SELECT customerId FROM customers WHERE email = %s', (session['customer'][2],))
+        cur.execute('SELECT customerId FROM customers WHERE email = %s', (session['customer'][3],))
         customer_id = cur.fetchone()[0]
+        print(customer_id)
 
         cur.execute('insert into accounts (accountname, customerid)'
                     ' values (%s, %s)',
@@ -209,7 +210,7 @@ def add_transaction():
     cur = conn.cursor()
 
     # Konten aus der Datenbank abrufen
-    cur.execute('SELECT accountid, accountname FROM accounts')
+    cur.execute('SELECT accountid, accountname FROM accounts WHERE customerid = %s', (session['customer'][0],))
     accounts_data = cur.fetchall()
 
     # Verbindung schließen
@@ -221,6 +222,7 @@ def add_transaction():
 
 @app.route('/accounts', methods=['GET', 'POST'])
 def accounts():
+    initial = request.args.get('initial', False)
     # Verbindung zur Datenbank herstellen, um Konten abzurufen
     conn = psycopg2.connect(
         host='localhost',
@@ -244,19 +246,20 @@ def accounts():
         "FROM accounts, transactions "
         "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
         "ORDER BY transactions.timestamp DESC LIMIT %s",
-        (session['customer'][0], 5))
+        (session['customer'][0], 15))
 
     transactions = cur.fetchall()
     # Verbindung schließen
     cur.close()
     conn.close()
 
-    return render_template('accounts.html', accounts=accounts_data, transactions=transactions)
+    return render_template('accounts.html', accounts=accounts_data, transactions=transactions, initial=initial)
 
 
 @app.route('/update_table', methods=['GET'])
 def update_table():
-    limit = request.args.get('limit', 5)  # Standardwert von 5, wenn keine Grenze angegeben ist
+    limit = request.args.get('limit', 15)  # Standardwert von 15, wenn keine Grenze angegeben ist
+    account_id = request.args.get('account_id', None)
 
     conn = psycopg2.connect(
         host='localhost',
@@ -266,25 +269,30 @@ def update_table():
     )
     cur = conn.cursor()
 
-    # Wenn kein Limit angegeben ist, alle Transaktionen abrufen
     if limit == "all":
+        limit_clause = ""
+    else:
+        limit_clause = f"LIMIT {int(limit)}"
+
+    if account_id and account_id != 'null':
         cur.execute(
-            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') "
-            "AS formatted_timestamp,"
+            f"SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
             "transactions.amount, transactions.recipient, transactions.description "
             "FROM accounts, transactions "
             "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
-            "ORDER BY transactions.timestamp DESC",
-            (session['customer'][0],))
+            f"AND accounts.accountid = %s "
+            "ORDER BY transactions.timestamp DESC "
+            f"{limit_clause}",
+            (session['customer'][0], int(account_id)))
     else:
         cur.execute(
-            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') "
-            "AS formatted_timestamp, "
+            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
             "transactions.amount, transactions.recipient, transactions.description "
             "FROM accounts, transactions "
             "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
-            "ORDER BY transactions.timestamp DESC LIMIT %s",
-            (session['customer'][0], limit))
+            "ORDER BY transactions.timestamp DESC "
+            f"{limit_clause}",
+            (session['customer'][0],))
 
     transactions = cur.fetchall()
 
@@ -292,5 +300,4 @@ def update_table():
     cur.close()
     conn.close()
 
-    table_html = render_template('table_fragment.html', transactions=transactions)
-    return table_html
+    return render_template('table_fragment.html', transactions=transactions)

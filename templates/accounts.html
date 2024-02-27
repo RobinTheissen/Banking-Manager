@@ -2,8 +2,27 @@
 
 {% block content %}
     <h1>Letzte Transaktionen</h1>
+    {% if initial %}
+        {% set limit=5 %}
+        {% set initial = False %}
+    {% else  %}
+        {% set limit=15 %}
+    {% endif %}
 
-    {% set limit=5 %}
+    <br>
+
+    <form action="/accounts" method="post" onsubmit="return getSelectedValue()">
+    <label for="accountSelect">Konto auswählen </label>
+    <select id="accountSelect" name="accountSelect" style="display: inline-block;">
+        <option value="" selected>Alle</option>
+        {% for account in accounts %}
+            <option value="{{ account[0] }}">{{ account[1] }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+    <br>
+
     <style>
         /* Ungerade Zeilen */
         #transactionTable tr:nth-child(odd) {
@@ -25,21 +44,32 @@
             });
 
             document.getElementById('show_all').addEventListener('click', function() {
-                limit = "all";
+                limit = 10000;
+                updateTable();
+            });
+
+            document.getElementById('accountSelect').addEventListener('change', function() {
+                limit = 15
+                selectedAccountId = this.value;
                 updateTable();
             });
 
             function updateTable() {
-            fetch(`/update_table?limit=${limit}`)
+            let selectedAccountId = document.getElementById('accountSelect').value;
+            if (selectedAccountId === "") {
+                selectedAccountId = 'null';
+            }
+            fetch(`/update_table?limit=${limit}&account_id=${selectedAccountId}`)
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('transactionTable').innerHTML = data.replace(/\\n/g, '');
                 });
             }
         });
-    </script>
 
-{%if limit == null %}
+    </script>
+{%if limit is not defined %}
+
     <div id="transactionTable">
         <table class="center" border="1">
             <tr>
@@ -60,6 +90,28 @@
                 {% endfor %}
         </table>
     </div>
+{% elif limit == 15 %}
+    <div id="transactionTable">
+        <table class="center" border="1">
+            <tr>
+                <th>Konto</th>
+                <th>Datum</th>
+                <th>Empfänger</th>
+                <th>Verwendungszweck</th>
+                <th>Betrag</th>
+            </tr>
+            {% for row in transactions[:15] %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[2] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
 {% else %}
     <div id="transactionTable">
         <table class="center" border="1">
@@ -87,14 +139,4 @@
         <input type="button" id="show_all" value="Alle anzeigen">
     </form>
 
-    <br>
-    <br>
-    <form action="/accounts" method="post">
-        <label for="accountSelect">Wähle ein Konto:</label>
-        <select id="accountSelect" name="accountSelect">
-            {% for account in accounts %}
-                <option value="{{ account[0] }}">{{ account[1] }}</option>
-            {% endfor %}
-        </select><br>
-    </form>
 {% endblock %}
