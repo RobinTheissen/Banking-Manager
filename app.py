@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta, datetime
 from data.customer import Customer
 from flask import Flask, render_template, request, session, redirect, url_for
@@ -145,7 +146,6 @@ def create_account():
 
         cur.execute('SELECT customerId FROM customers WHERE email = %s', (session['customer'][3],))
         customer_id = cur.fetchone()[0]
-        print(customer_id)
 
         cur.execute('insert into accounts (accountname, customerid)'
                     ' values (%s, %s)',
@@ -162,6 +162,7 @@ def create_account():
 
 @app.route('/transaction', methods=['GET', 'POST'])
 def add_transaction():
+    error = ''
     # Verbindung zur Datenbank herstellen
     conn = psycopg2.connect(
         host='localhost',
@@ -173,7 +174,8 @@ def add_transaction():
 
     cur.execute('SELECT accountid, accountname FROM accounts WHERE customerid = %s', (session['customer'][0],))
     accounts_data = cur.fetchall()
-
+    cur.execute('SELECT categoryid, category FROM categories WHERE customerid = %s', (session['customer'][0],))
+    categories = cur.fetchall()
     if not accounts_data:
         error = "Bitte neues Konto hinzufügen."
         return render_template('create_account.html', error=error)
@@ -184,15 +186,58 @@ def add_transaction():
         amount = request.form.get('amount')
         recipient = request.form.get('recipient')
         description = request.form.get('description')
+        category = request.form.get('categorySelect')
 
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        amount = amount.replace(',', '.')
-        # Transaktion in die Datenbank einfügen
-        cur.execute('INSERT INTO transactions (accountid, timestamp, amount, recipient, description)'
-                    'VALUES (%s, %s, %s, %s, %s)',
-                    (account_id, timestamp, amount, recipient, description))
+        recipient_list = recipient.split()
+        description_list = description.split()
 
+        # Überprüfung auf Sonderzeichen
+        def contains_special_characters(input_string):
+            # Verwendet eine reguläre Ausdruck, um nach Sonderzeichen zu suchen
+            pattern = re.compile('[^A-Za-z0-9 ]')
+            return bool(pattern.search(input_string))
+
+        # Überprüfung für recipient
+        if contains_special_characters(recipient):
+            error = "Empfänger darf keine Sonderzeichen enthalten."
+            # Handle den Fehler, z.B. durch Rückgabe einer Fehlermeldung an den Benutzer
+            return render_template('transaction.html', accounts=accounts_data, categories=categories, error=error)
+
+        # Überprüfung für description
+        if contains_special_characters(description):
+            error = "Beschreibung darf keine Sonderzeichen enthalten."
+            # Handle den Fehler, z.B. durch Rückgabe einer Fehlermeldung an den Benutzer
+            return render_template('transaction.html', accounts=accounts_data, categories=categories, error=error)
+
+        amount = amount.replace(',', '.')
+
+        cur.execute('SELECT keyword, keywords.categoryid FROM keywords, categories WHERE '
+                    'keywords.categoryid = categories.categoryid AND (categories.customerid = %s)', (session['customer'][0],))
+        keywordlist = cur.fetchall()
+
+        if not category:
+            result = False
+            for text in recipient_list:
+                result = next((value for item, value in keywordlist if item == text), None)
+                break
+            if result:
+                category = result
+            else:
+                for text in description_list:
+                    result = next((value for item, value in keywordlist if item == text), None)
+                    break
+
+        # Transaktion in die Datenbank einfügen
+        if category:
+            cur.execute('INSERT INTO transactions (accountid, timestamp, amount, recipient, description, categoryid)'
+                        'VALUES (%s, %s, %s, %s, %s, %s)',
+                        (account_id, timestamp, amount, recipient, description, category))
+        else:
+            cur.execute('INSERT INTO transactions (accountid, timestamp, amount, recipient, description)'
+                        'VALUES (%s, %s, %s, %s, %s)',
+                        (account_id, timestamp, amount, recipient, description))
         # Verbindung schließen und Änderungen speichern
         conn.commit()
         cur.close()
@@ -217,7 +262,7 @@ def add_transaction():
     cur.close()
     conn.close()
 
-    return render_template('transaction.html', accounts=accounts_data)
+    return render_template('transaction.html', accounts=accounts_data, categories=categories)
 
 
 @app.route('/accounts', methods=['GET', 'POST'])
@@ -242,11 +287,14 @@ def accounts():
 
     cur.execute(
         "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
-        "transactions.amount, transactions.recipient, transactions.description "
-        "FROM accounts, transactions "
-        "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
+        "transactions.amount, transactions.recipient, transactions.description, categories.category "
+        "FROM accounts "
+        "JOIN transactions ON accounts.accountid = transactions.accountid "
+        "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "  # LEFT JOIN hinzugefügt
+        "WHERE accounts.customerid = %s "
         "ORDER BY transactions.timestamp DESC LIMIT %s",
-        (session['customer'][0], 15))
+        (session['customer'][0], 15)
+    )
 
     transactions = cur.fetchall()
     # Verbindung schließen
@@ -276,23 +324,28 @@ def update_table():
 
     if account_id and account_id != 'null':
         cur.execute(
-            f"SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
-            "transactions.amount, transactions.recipient, transactions.description "
-            "FROM accounts, transactions "
-            "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
-            f"AND accounts.accountid = %s "
+            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
+            "transactions.amount, transactions.recipient, transactions.description, categories.category "
+            "FROM accounts "
+            "JOIN transactions ON accounts.accountid = transactions.accountid "
+            "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
+            "WHERE accounts.customerid = %s AND accounts.accountid = %s "
             "ORDER BY transactions.timestamp DESC "
             f"{limit_clause}",
-            (session['customer'][0], int(account_id)))
+            (session['customer'][0], int(account_id))
+        )
     else:
         cur.execute(
             "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
-            "transactions.amount, transactions.recipient, transactions.description "
-            "FROM accounts, transactions "
-            "WHERE accounts.customerid = %s AND accounts.accountid = transactions.accountid "
+            "transactions.amount, transactions.recipient, transactions.description, categories.category "
+            "FROM accounts "
+            "JOIN transactions ON accounts.accountid = transactions.accountid "
+            "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
+            "WHERE accounts.customerid = %s "
             "ORDER BY transactions.timestamp DESC "
             f"{limit_clause}",
-            (session['customer'][0],))
+            (session['customer'][0],)
+        )
 
     transactions = cur.fetchall()
 
@@ -304,7 +357,9 @@ def update_table():
 
 
 @app.route('/categories', methods=['GET', 'POST'])
-def categories():
+def category_page():
+    error_category = ""
+    error_keyword= ""
     conn = psycopg2.connect(
         host='localhost',
         database='postgres',
@@ -313,7 +368,29 @@ def categories():
     )
     cur = conn.cursor()
 
+    cur.execute('SELECT categoryid, category FROM categories WHERE customerid = %s', (session['customer'][0],))
+    categories = cur.fetchall()
+
+    if request.method == 'POST':
+        category = request.form.get('category')
+        category_id = request.form.get('categorySelect')
+        keyword = request.form.get('keyword')
+        if category is not None and all(category != existing_category for _, existing_category in categories):
+            cur.execute('INSERT INTO categories (category, customerid)'
+                        'VALUES (%s, %s)',
+                        (category, session['customer'][0]))
+        else:
+            error_category = f"{category} ist bereits in der Kategorienliste enthalten."
+        if keyword is not None:
+            cur.execute('INSERT INTO keywords(keyword, categoryid)'
+                        'VALUES (%s, %s)',
+                        (keyword, category_id))
+        else:
+            error_keyword = f"{keyword} ist bereits in der Schlagwortliste enthalten."
+        conn.commit()
+
     cur.close()
     conn.close()
 
-    return render_template('categories.html', categories=categories)
+    return render_template('categories.html', categories=categories, errorCategory=error_category,
+                           error_keyword=error_keyword)

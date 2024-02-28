@@ -34,6 +34,8 @@ cur.execute('CREATE TABLE IF NOT EXISTS transactions'
             'recipient VARCHAR(50) NOT NULL,'
             'description VARCHAR(100),'
             'accountId INTEGER NOT NULL,'
+            'categoryId INTEGER,'
+            'FOREIGN KEY (categoryId) REFERENCES categories(categoryid),'
             'FOREIGN KEY (accountId) REFERENCES accounts(accountId));'
             )
 
