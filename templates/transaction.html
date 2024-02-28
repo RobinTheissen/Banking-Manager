@@ -21,6 +21,14 @@
     <label for="description">Verwendungszweck:</label>
     <textarea id="description" name="description" ></textarea><br>
 
+    <label for="categorySelect">Kategorie:</label>
+            <select id="categorySelect" name="categorySelect" style="display: inline-block;">
+                <option value="" disabled selected>Kategorie auswählen</option>
+                {% for category in categories %}
+                    <option value="{{ category[0] }}">{{ category[1] }}</option>
+                {% endfor %}
+            </select>
+    <br>
     <input type="submit" value="Transaktion hinzufügen">
 </form>
 {% if error %}

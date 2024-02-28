@@ -145,7 +145,6 @@ def create_account():
 
         cur.execute('SELECT customerId FROM customers WHERE email = %s', (session['customer'][3],))
         customer_id = cur.fetchone()[0]
-        print(customer_id)
 
         cur.execute('insert into accounts (accountname, customerid)'
                     ' values (%s, %s)',
@@ -173,7 +172,13 @@ def add_transaction():
 
     cur.execute('SELECT accountid, accountname FROM accounts WHERE customerid = %s', (session['customer'][0],))
     accounts_data = cur.fetchall()
-
+    cur.execute('SELECT categoryid, category FROM categories WHERE customerid = %s', (session['customer'][0],))
+    categories = cur.fetchall()
+    cur.execute(
+        'SELECT keyword, categoryid FROM keywords WHERE categoryid IN (SELECT categoryid FROM categories WHERE customerid = %s)',
+        (session['customer'][0],))
+    gross = cur.fetchall()
+    print(gross)
     if not accounts_data:
         error = "Bitte neues Konto hinzufügen."
         return render_template('create_account.html', error=error)
@@ -184,15 +189,20 @@ def add_transaction():
         amount = request.form.get('amount')
         recipient = request.form.get('recipient')
         description = request.form.get('description')
+        category = request.form.get('categorySelect')
 
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         amount = amount.replace(',', '.')
         # Transaktion in die Datenbank einfügen
-        cur.execute('INSERT INTO transactions (accountid, timestamp, amount, recipient, description)'
-                    'VALUES (%s, %s, %s, %s, %s)',
-                    (account_id, timestamp, amount, recipient, description))
-
+        if category:
+            cur.execute('INSERT INTO transactions (accountid, timestamp, amount, recipient, description, categoryid)'
+                        'VALUES (%s, %s, %s, %s, %s, %s)',
+                        (account_id, timestamp, amount, recipient, description, category))
+        else:
+            cur.execute('INSERT INTO transactions (accountid, timestamp, amount, recipient, description)'
+                        'VALUES (%s, %s, %s, %s, %s)',
+                        (account_id, timestamp, amount, recipient, description))
         # Verbindung schließen und Änderungen speichern
         conn.commit()
         cur.close()
@@ -217,7 +227,7 @@ def add_transaction():
     cur.close()
     conn.close()
 
-    return render_template('transaction.html', accounts=accounts_data)
+    return render_template('transaction.html', accounts=accounts_data, categories=categories)
 
 
 @app.route('/accounts', methods=['GET', 'POST'])
@@ -304,7 +314,9 @@ def update_table():
 
 
 @app.route('/categories', methods=['GET', 'POST'])
-def categories():
+def category_page():
+    error_category = ""
+    error_keyword= ""
     conn = psycopg2.connect(
         host='localhost',
         database='postgres',
@@ -313,7 +325,29 @@ def categories():
     )
     cur = conn.cursor()
 
+    cur.execute('SELECT categoryid, category FROM categories WHERE customerid = %s', (session['customer'][0],))
+    categories = cur.fetchall()
+
+    if request.method == 'POST':
+        category = request.form.get('category')
+        category_id = request.form.get('categorySelect')
+        keyword = request.form.get('keyword')
+        if category is not None and all(category != existing_category for _, existing_category in categories):
+            cur.execute('INSERT INTO categories (category, customerid)'
+                        'VALUES (%s, %s)',
+                        (category, session['customer'][0]))
+        else:
+            error_category = f"{category} ist bereits in der Kategorienliste enthalten."
+        if keyword is not None:
+            cur.execute('INSERT INTO keywords(keyword, categoryid)'
+                        'VALUES (%s, %s)',
+                        (keyword, category_id))
+        else:
+            error_keyword = f"{keyword} ist bereits in der Schlagwortliste enthalten."
+        conn.commit()
+
     cur.close()
     conn.close()
 
-    return render_template('categories.html', categories=categories)
+    return render_template('categories.html', categories=categories, errorCategory=error_category,
+                           error_keyword=error_keyword)
