@@ -301,3 +301,19 @@ def update_table():
     conn.close()
 
     return render_template('table_fragment.html', transactions=transactions)
+
+
+@app.route('/categories', methods=['GET', 'POST'])
+def categories():
+    conn = psycopg2.connect(
+        host='localhost',
+        database='postgres',
+        user=os.environ["DB_USERNAME"],
+        password=os.environ["DB_PASSWORD"]
+    )
+    cur = conn.cursor()
+
+    cur.close()
+    conn.close()
+
+    return render_template('categories.html', categories=categories)
