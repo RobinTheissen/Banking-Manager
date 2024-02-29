@@ -5,6 +5,7 @@
         <th>Empfänger</th>
         <th>Verwendungszweck</th>
         <th>Betrag</th>
+        <th>Kategorie</th>
     </tr>
 
     {% for row in transactions %}
@@ -14,6 +15,7 @@
             <td>{{ row[3] }}</td>
             <td>{{ row[4] }}</td>
             <td>{{ row[2] }}</td>
+            <td>{{ row[5] if row[5] is not none else '' }}</td>
         </tr>
     {% endfor %}
 </table>

@@ -11,9 +11,9 @@
 
     <br>
 
-    <form action="/accounts" method="post" onsubmit="return getSelectedValue()">
+    <form action="/accounts" method="post">
     <label for="accountSelect">Konto auswählen </label>
-    <select id="accountSelect" name="accountSelect" style="display: inline-block;">
+    <select id="accountSelect" name="accountSelect" style="display: inline-block">
         <option value="" selected>Alle</option>
         {% for account in accounts %}
             <option value="{{ account[0] }}">{{ account[1] }}</option>
@@ -35,7 +35,8 @@
         }
     </style>
     <script>
-        let limit = {{ limit }};
+        let limit = {{ limit }}
+        let selectedAccountId;
 
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('increase15').addEventListener('click', function() {
@@ -78,6 +79,7 @@
                 <th>Empfänger</th>
                 <th>Verwendungszweck</th>
                 <th>Betrag</th>
+                <th>Kategorie</th>
             </tr>
                 {% for row in transactions %}
                 <tr>
@@ -86,6 +88,7 @@
                     <td>{{ row[3] }}</td>
                     <td>{{ row[4] }}</td>
                     <td>{{ row[2] }}</td>
+                    <td>{{ row[5] if row[5] is not none else '' }}</td>
                 </tr>
                 {% endfor %}
         </table>
@@ -99,6 +102,7 @@
                 <th>Empfänger</th>
                 <th>Verwendungszweck</th>
                 <th>Betrag</th>
+                <th>Kategorie</th>
             </tr>
             {% for row in transactions[:15] %}
                 <tr>
@@ -107,6 +111,7 @@
                     <td>{{ row[3] }}</td>
                     <td>{{ row[4] }}</td>
                     <td>{{ row[2] }}</td>
+                     <td>{{ row[5] if row[5] is not none else '' }}</td>
                 </tr>
             {% endfor %}
         </table>
@@ -121,6 +126,7 @@
                 <th>Empfänger</th>
                 <th>Verwendungszweck</th>
                 <th>Betrag</th>
+                <th>Kategorie</th>
             </tr>
             {% for row in transactions[:limit] %}
                 <tr>
@@ -129,6 +135,7 @@
                     <td>{{ row[3] }}</td>
                     <td>{{ row[4] }}</td>
                     <td>{{ row[2] }}</td>
+                    <td>{{ row[5] if row[5] is not none else '' }}</td>
                 </tr>
             {% endfor %}
         </table>

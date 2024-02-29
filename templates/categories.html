@@ -1,0 +1,34 @@
+{% extends "vorlagen/main.html" %}
+
+{% block content %}
+    <h2>Neue Kategorie erstellen</h2>
+    <form action="/categories" method="POST">
+        <br>
+        <label for="category"></label>
+        <input type="text" id="category" name="category" required>
+        <button type="submit">Kategorie anlegen</button>
+    </form>
+    <br>
+    {% if errorCategory %}
+        <p class="error"> {{ errorCategory }}
+    {% endif %}
+
+    <h2>Neues Schlagwort hinzufügen</h2>
+    <form action="/categories" method="POST">
+        <label for="categorySelect">Kategorie:</label>
+        <select id="categorySelect" name="categorySelect" required style="display: inline-block;">
+            <option value="" disabled selected>Kategorie auswählen</option>
+            {% for category in categories %}
+                <option value="{{ category[0] }}">{{ category[1] }}</option>
+            {% endfor %}
+        </select>
+        <label for="keyword">Schlagwort:</label>
+        <input type="text" id="keyword" name="keyword" required>
+        <button type="submit">Schlagwort hinzufügen</button>
+    </form>
+
+    {% if errorKeyword %}
+        <p class="error"> {{ errorKeyword }}
+    {% endif %}
+
+{% endblock %}
