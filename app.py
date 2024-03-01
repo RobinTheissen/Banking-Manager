@@ -220,14 +220,20 @@ def add_transaction():
         if not category:
             result = False
             for text in recipient_list:
-                result = next((value for item, value in keywordlist if item == text), None)
-                break
+                match = next((value for item, value in keywordlist if item == text), None)
+                if match:
+                    result = match
+                    break
+
+            if not result:
+                for text in description_list:
+                    match = next((value for item, value in keywordlist if item == text), None)
+                    if match:
+                        result = match
+                        break
+
             if result:
                 category = result
-            else:
-                for text in description_list:
-                    result = next((value for item, value in keywordlist if item == text), None)
-                    break
 
         # Transaktion in die Datenbank einfügen
         if category:
@@ -394,3 +400,75 @@ def category_page():
 
     return render_template('categories.html', categories=categories, errorCategory=error_category,
                            error_keyword=error_keyword)
+
+
+@app.route('/update_table/search', methods=['POST'])
+def update_table_search():
+    if request.method == 'POST':
+
+        keyword = request.form['keyword']
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        amount = request.form['amount']
+        recipient = request.form['recipient']
+
+        # Basiskomponenten der SQL-Abfrage
+        base_query = (
+            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') "
+            "AS formatted_timestamp, "
+            "transactions.amount, transactions.recipient, transactions.description, categories.category "
+            "FROM accounts "
+            "JOIN transactions ON accounts.accountid = transactions.accountid "
+            "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
+            "WHERE accounts.customerid = %s "
+        )
+
+        # Zusätzliche Bedingungen
+        where_conditions = []
+        params = [session['customer'][0]]
+
+        if keyword:
+            where_conditions.append("AND transactions.description ILIKE %s")
+            params.append(f"%{keyword}%")
+
+        if start_date:
+            where_conditions.append("AND transactions.timestamp >= %s")
+            params.append(start_date)
+
+        if end_date:
+            where_conditions.append("AND transactions.timestamp <= %s")
+            params.append(end_date)
+
+        if amount:
+            where_conditions.append("AND transactions.amount = %s")
+            params.append(amount)
+
+        if recipient:
+            where_conditions.append("AND transactions.recipient ILIKE %s")
+            params.append(f"%{recipient}%")
+
+        # Erstelle die vollständige WHERE-Klausel
+        where_clause = " ".join(where_conditions) if where_conditions else ""
+
+        print(where_clause)
+
+        # Setze die vollständige SQL-Abfrage zusammen
+        sql_query = f"{base_query} {where_clause} ORDER BY transactions.timestamp DESC"
+
+        conn = psycopg2.connect(
+            host='localhost',
+            database='postgres',
+            user=os.environ["DB_USERNAME"],
+            password=os.environ["DB_PASSWORD"]
+        )
+        cur = conn.cursor()
+
+        cur.execute(sql_query, params)
+        transactions = cur.fetchall()
+        total_amount = sum(row[2] for row in transactions)
+
+
+        cur.close()
+        conn.close()
+
+        return render_template('table_fragment.html', transactions=transactions, total_amount=total_amount)
