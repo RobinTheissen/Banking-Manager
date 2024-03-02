@@ -1,4 +1,13 @@
 <table class="center" border="1">
+    {% if total_amount is defined %}
+        <tr>
+            <td colspan="4"><strong>Gesamt:</strong></td>
+            <td><strong>{{ total_amount }}</strong></td>
+            <td></td>
+        </tr>
+    {% endif %}
+<br>
+
     <tr>
         <th>Konto</th>
         <th>Datum</th>

@@ -1,0 +1,112 @@
+{% extends "vorlagen/main.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<body>
+    <h1>Kontoeinträge</h1>
+
+    <form id="date" method="POST" action="/update_chart">
+        <label for="start_date">Startdatum:</label>
+        <input type="date" id="start_date" name="start_date">
+
+        <label for="end_date">Enddatum:</label>
+        <input type="date" id="end_date" name="end_date">
+        <input type="submit" id="search" value="Suchen">
+    </form>
+
+    <!-- Hier ist der Abschnitt für das Pie Chart -->
+    <div style="margin: auto;">
+        <canvas id="myPieChart" style="max-height: 300px; max-width: 300px;"></canvas>
+    </div>
+
+    <script>
+        // Die Daten können direkt aus der Flask-Variable verwendet werden
+        let pieChartData = {{ pie_chart_data | safe }};
+
+        // Funktion zum Generieren von Farben
+        function generateColors(count) {
+            let colors = [];
+            for (let i = 0; i < count; i++) {
+                let color = 'rgba(' + getRandomInt(0, 255) + ',' + getRandomInt(0, 255) + ',' + getRandomInt(0, 255) + ',0.7)';
+                colors.push(color);
+            }
+            return colors;
+        }
+
+        // Hilfsfunktion zum Generieren einer zufälligen Ganzzahl
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Die Funktion createPieChart erstellt das Pie Chart basierend auf den bereitgestellten Daten
+        let ctx = document.getElementById('myPieChart').getContext('2d');
+
+        // Definiere standardmäßige Farben und fülle den Rest dynamisch
+        let defaultColors = [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)'
+        ];
+
+        let remainingColors = generateColors(Math.max(0, pieChartData.labels.length - defaultColors.length));
+
+        let backgroundColors = defaultColors.concat(remainingColors);
+
+        let myPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: pieChartData.labels,
+                datasets: [{
+                    data: pieChartData.values,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                    borderWidth: 1
+                }]
+            }
+        });
+
+        document.getElementById('date').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            var startDate = document.getElementById('start_date').value;
+            var endDate = document.getElementById('end_date').value;
+
+            // Führe die AJAX-Anfrage durch, um die Daten zu aktualisieren
+            fetch('/update_chart', {
+                method: 'POST',
+                body: new URLSearchParams(new FormData(this)),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Aktualisiere das Pie Chart mit den neuen Daten
+                updatePieChart(data.labels, data.values, data.backgroundColors);
+            });
+        });
+
+        function updatePieChart(labels, values, backgroundColors) {
+            if (window.myPieChart) {
+                window.myPieChart.destroy();
+            }
+
+            let ctx = document.getElementById('myPieChart').getContext('2d');
+            window.myPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
-    <h1>Letzte Transaktionen</h1>
+
     {% if initial %}
         {% set limit=5 %}
         {% set initial = False %}
@@ -12,6 +12,7 @@
     <br>
 
     <form action="/accounts" method="post">
+    <h1>Letzte Transaktionen</h1>
     <label for="accountSelect">Konto auswählen </label>
     <select id="accountSelect" name="accountSelect" style="display: inline-block">
         <option value="" selected>Alle</option>
@@ -20,6 +21,27 @@
         {% endfor %}
     </select>
 </form>
+
+<form id="searchForm" method="POST" action="/update_table/search">
+    <label for="start_date">Startdatum:</label>
+    <input type="date" id="start_date" name="start_date">
+
+    <label for="end_date">Enddatum:</label>
+    <input type="date" id="end_date" name="end_date">
+
+    <label for="recipient">Name des Empfängers:</label>
+    <input type="text" id="recipient" name="recipient">
+
+
+    <label for="keyword">Stichwort im Verwendungszweck:</label>
+    <input type="text" id="keyword" name="keyword">
+
+    <label for="amount">Höhe des überwiesenen Betrags:</label>
+    <input type="text" id="amount" name="amount">
+
+    <input type="submit" id="search" value="Suchen">
+</form>
+
 
     <br>
 
@@ -60,13 +82,39 @@
             if (selectedAccountId === "") {
                 selectedAccountId = 'null';
             }
+
             fetch(`/update_table?limit=${limit}&account_id=${selectedAccountId}`)
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('transactionTable').innerHTML = data.replace(/\\n/g, '');
+                    addSortingFunctionality();
                 });
             }
         });
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('searchForm').addEventListener('submit', function (event) {
+        event.preventDefault(); // Verhindert das Standardverhalten des Formulars (Seitenneuladung)
+
+        // Sammelt Formulardaten
+        let formData = new FormData(this);
+
+        // Führt einen Fetch durch, um die Serverdaten zu aktualisieren
+        fetch('/update_table/search', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            // Aktualisiert die Tabelle mit den neuen Daten
+            document.getElementById('transactionTable').innerHTML = data.replace(/\\n/g, '');
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+function redirectToVisualPage() {
+            window.location.href = '/visual';  // Passe den Pfad entsprechend an
+        }
 
     </script>
 {%if limit is not defined %}
@@ -144,6 +192,7 @@
     <form>
         <input type="button" id="increase15" value="+ 15">
         <input type="button" id="show_all" value="Alle anzeigen">
+        <input type="button" id="visual" value="Kontoeinträge Visualisieren" onclick="redirectToVisualPage()">
     </form>
 
 {% endblock %}
