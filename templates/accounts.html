@@ -112,7 +112,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => console.error('Error:', error));
     });
 });
-
+function redirectToVisualPage() {
+            window.location.href = '/visual';  // Passe den Pfad entsprechend an
+        }
 
     </script>
 {%if limit is not defined %}
@@ -190,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
     <form>
         <input type="button" id="increase15" value="+ 15">
         <input type="button" id="show_all" value="Alle anzeigen">
+        <input type="button" id="visual" value="Kontoeinträge Visualisieren" onclick="redirectToVisualPage()">
     </form>
 
 {% endblock %}

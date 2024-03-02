@@ -11,7 +11,6 @@
 <body>
 <div class="navigation">
     <nav>
-        <a href="./" {% if request.path == '/' %}class="active"{% endif %}> Startseite </a>
         <!-- if statement removes login and register hyperlink if a user is logged in -->
         {% if session == {} %}
             <a href="./login" {% if request.path == '/login' %}class="active"{% endif %}> Login </a>
