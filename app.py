@@ -1,3 +1,4 @@
+import hashlib
 import re
 from datetime import timedelta, datetime
 from data.customer import Customer
@@ -65,7 +66,7 @@ def register():
                 request.form['lastname'],
                 request.form['age'] if request.form['age'] else None,
                 request.form['email'],
-                request.form['password'],
+                hashlib.sha256(request.form['password'].encode()).hexdigest(),
                 request.form['bankinginstitution'] if request.form['bankinginstitution'] else None
             )
 
@@ -97,7 +98,7 @@ def register():
 def login_page():
     if request.method == 'POST':
         login_email = request.form['email']
-        login_password = request.form['password']
+        login_password = hashlib.sha256(request.form['password'].encode()).hexdigest()
 
         conn = psycopg2.connect(
             host='localhost',
@@ -196,7 +197,7 @@ def add_transaction():
         # Überprüfung auf Sonderzeichen
         def contains_special_characters(input_string):
             # Verwendet eine reguläre Ausdruck, um nach Sonderzeichen zu suchen
-            pattern = re.compile('[^A-Za-z0-9 ]')
+            pattern = re.compile(r'[^\w\säöüß]')
             return bool(pattern.search(input_string))
 
         # Überprüfung für recipient
@@ -385,9 +386,12 @@ def category_page():
             cur.execute('INSERT INTO categories (category, customerid)'
                         'VALUES (%s, %s)',
                         (category, session['customer'][0]))
+            cur.execute('SELECT categoryid, category FROM categories WHERE customerid = %s', (session['customer'][0],))
+            categories=cur.fetchall()
         else:
             error_category = f"{category} ist bereits in der Kategorienliste enthalten."
         if keyword is not None:
+            error_category = ""
             cur.execute('INSERT INTO keywords(keyword, categoryid)'
                         'VALUES (%s, %s)',
                         (keyword, category_id))
@@ -450,9 +454,8 @@ def update_table_search():
         # Erstelle die vollständige WHERE-Klausel
         where_clause = " ".join(where_conditions) if where_conditions else ""
 
-        print(where_clause)
-
         # Setze die vollständige SQL-Abfrage zusammen
+
         sql_query = f"{base_query} {where_clause} ORDER BY transactions.timestamp DESC"
 
         conn = psycopg2.connect(
@@ -466,7 +469,6 @@ def update_table_search():
         cur.execute(sql_query, params)
         transactions = cur.fetchall()
         total_amount = sum(row[2] for row in transactions)
-
 
         cur.close()
         conn.close()

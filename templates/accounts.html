@@ -1,7 +1,7 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
-    <h1>Letzte Transaktionen</h1>
+
     {% if initial %}
         {% set limit=5 %}
         {% set initial = False %}
@@ -12,6 +12,7 @@
     <br>
 
     <form action="/accounts" method="post">
+    <h1>Letzte Transaktionen</h1>
     <label for="accountSelect">Konto auswählen </label>
     <select id="accountSelect" name="accountSelect" style="display: inline-block">
         <option value="" selected>Alle</option>
@@ -81,10 +82,12 @@
             if (selectedAccountId === "") {
                 selectedAccountId = 'null';
             }
+
             fetch(`/update_table?limit=${limit}&account_id=${selectedAccountId}`)
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('transactionTable').innerHTML = data.replace(/\\n/g, '');
+                    addSortingFunctionality();
                 });
             }
         });

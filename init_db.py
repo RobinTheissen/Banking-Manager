@@ -2,11 +2,12 @@ import psycopg2
 import os
 
 
-conn = psycopg2.connect(  # establishes connection to database
+conn = psycopg2.connect(
     host="localhost",
     database="postgres",
     user=os.environ["DB_USERNAME"],
-    password=os.environ["DB_PASSWORD"])
+    password=os.environ["DB_PASSWORD"]
+)
 
 cur = conn.cursor()
 
@@ -18,6 +19,13 @@ cur.execute('CREATE TABLE IF NOT EXISTS customers'
             'password VARCHAR(100),'
             'age INTEGER,'
             'bankingInstitution VARCHAR(100));'
+            )
+
+cur.execute('CREATE TABLE IF NOT EXISTS categories'
+            '(categoryId SERIAL PRIMARY KEY,'
+            'category VARCHAR(25),'
+            'customerId INTEGER NOT NULL,'
+            'FOREIGN KEY (customerId) REFERENCES customers(customerId));'
             )
 
 cur.execute('CREATE TABLE IF NOT EXISTS accounts'
@@ -35,15 +43,8 @@ cur.execute('CREATE TABLE IF NOT EXISTS transactions'
             'description VARCHAR(100),'
             'accountId INTEGER NOT NULL,'
             'categoryId INTEGER,'
-            'FOREIGN KEY (categoryId) REFERENCES categories(categoryid),'
+            'FOREIGN KEY (categoryId) REFERENCES categories(categoryId),'
             'FOREIGN KEY (accountId) REFERENCES accounts(accountId));'
-            )
-
-cur.execute('CREATE TABLE IF NOT EXISTS categories'
-            '(categoryId SERIAL PRIMARY KEY,'
-            'category VARCHAR(25),'
-            'customerId INTEGER NOT NULL,'
-            'FOREIGN KEY (customerId) REFERENCES customers(customerId));'
             )
 
 cur.execute('CREATE TABLE IF NOT EXISTS keywords'
