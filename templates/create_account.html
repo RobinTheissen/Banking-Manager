@@ -1,10 +1,11 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
-    <form action="/create_account" method="POST">
+    <form id="createAccountForm" action="/create_account" method="POST">
+        <h1>Konto anlegen</h1>
         <label for="accountName">Kontoname:</label>
         <input type="text" id="accountName" name="accountName" required>
-        <button type="submit">Konto erstellen</button>
+        <button type="button">Konto erstellen</button>
     </form>
     {% if error %}
         <H2 class="error"> {{ error }}</H2>

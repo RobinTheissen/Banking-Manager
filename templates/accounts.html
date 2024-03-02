@@ -11,7 +11,7 @@
 
     <br>
 
-    <form action="/accounts" method="post">
+<form action="/accounts" method="post">
     <h1>Letzte Transaktionen</h1>
     <label for="accountSelect">Konto auswählen </label>
     <select id="accountSelect" name="accountSelect" style="display: inline-block">
@@ -20,7 +20,12 @@
             <option value="{{ account[0] }}">{{ account[1] }}</option>
         {% endfor %}
     </select>
+<input type="button" id="toggleForm" value="Einträge Filtern">
+<input type="button" id="visual" value="Kontoeinträge Visualisieren" onclick="redirectToVisualPage()">
 </form>
+<br>
+    <br>
+
 
 <form id="searchForm" method="POST" action="/update_table/search">
     <label for="start_date">Startdatum:</label>
@@ -31,7 +36,6 @@
 
     <label for="recipient">Name des Empfängers:</label>
     <input type="text" id="recipient" name="recipient">
-
 
     <label for="keyword">Stichwort im Verwendungszweck:</label>
     <input type="text" id="keyword" name="keyword">
@@ -87,7 +91,6 @@
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('transactionTable').innerHTML = data.replace(/\\n/g, '');
-                    addSortingFunctionality();
                 });
             }
         });
@@ -111,6 +114,19 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => console.error('Error:', error));
     });
+});
+function redirectToVisualPage() {
+            window.location.href = '/visual';  // Passe den Pfad entsprechend an
+        }
+
+document.getElementById('toggleForm').addEventListener('click', function() {
+    let form = document.getElementById('searchForm');
+    form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+});
+
+document.getElementById('searchForm').addEventListener('submit', function() {
+    let form = document.getElementById('searchForm');
+    form.style.display = 'none';
 });
 
 
