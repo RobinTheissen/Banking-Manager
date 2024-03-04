@@ -9,10 +9,14 @@ class TextValidator:
 
     @staticmethod
     def password_validation(password):
-        (len(password) >= 8 and
-         any(char.isupper() for char in password) and
-         any(char.islower() for char in password) and
-         any(char.isdigit() for char in password) and
-         any(char in '!@#$%^&*()-_=+[]{}|;:\'",.<>?/~`' for char in password) and
-         password[0] not in '!@#$%^&*()-_=+[]{}|;:\'",.<>?/~`' and
-         password[-1] not in '!@#$%^&*()-_=+[]{}|;:\'",.<>?/~`')
+        conditions = [
+            len(password) >= 8,
+            any(char.isupper() for char in password),
+            any(char.islower() for char in password),
+            any(char.isdigit() for char in password),
+            any(char in '!@#$%^&*()-_=+[]{}|;:\'",.<>?/~`' for char in password),
+            password[0] not in '!@#$%^&*()-_=+[]{}|;:\'",.<>?/~`',
+            password[-1] not in '!@#$%^&*()-_=+[]{}|;:\'",.<>?/~`'
+        ]
+
+        return all(conditions)

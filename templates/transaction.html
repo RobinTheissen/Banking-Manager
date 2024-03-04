@@ -1,16 +1,17 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
-<h1>Add Transaction</h1>
 
-<form action="/transaction" method="post">
+
+<form id="transactionForm" action="/transaction" method="post">
+    <h1>Add Transaction</h1>
     <label for="accountSelect">Wähle ein Konto:</label>
     <select id="accountSelect" name="accountSelect">
         {% for account in accounts %}
             <option value="{{ account[0] }}">{{ account[1] }}</option>
         {% endfor %}
     </select><br>
-
+    <br>
     <label for="amount">Betrag:</label>
     <input type="number" id="amount" name="amount" required
            step="0.01" min="0.01" max="9999999.99" title="Bitte geben Sie eine Zahl zwischen 0,01 und 9999999,99 ein"><br>
@@ -29,7 +30,8 @@
                 {% endfor %}
             </select>
     <br>
-    <input type="submit" value="Transaktion hinzufügen">
+    <br>
+    <button type="submit">Transaktion hinzufügen</Button>
 </form>
 {% if error %}
         <H2 class="error"> {{ error }}</H2>

@@ -70,8 +70,8 @@
         document.getElementById('date').addEventListener('submit', function (event) {
             event.preventDefault();
 
-            var startDate = document.getElementById('start_date').value;
-            var endDate = document.getElementById('end_date').value;
+            let startDate = document.getElementById('start_date').value;
+            let endDate = document.getElementById('end_date').value;
 
             // Führe die AJAX-Anfrage durch, um die Daten zu aktualisieren
             fetch('/update_chart', {

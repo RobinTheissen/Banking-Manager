@@ -10,6 +10,9 @@ body {
     padding: 10px;
     display: flex;
     justify-content: space-between;
+    width: auto;
+    top: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 5);
 }
 
 nav {
@@ -26,24 +29,43 @@ input[type="button"] {
     border-radius: 5px;
     transition: background-color 0.3s ease;
     cursor: pointer;
+    background-color: #555
 }
 
-/* Hover-Effekt für Links, Submit-Buttons und Buttons */
-nav a:hover,
-input[type="submit"]:hover,
-input[type="button"]:hover {
-    background-color: #555;
+button{
+    color: #fff;
+    text-decoration: none;
+    margin-right: 15px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+    background-color: #555
+}
+
+nav a:hover{
+    background-color: rgba(255, 255, 0, 0.63);
 }
 
 /* Klasse für aktive Seiten */
-nav a.active,
-input[type="submit"].active,
-input[type="button"].active {
+nav a.active{
     font-weight: bold;
-    color: yellow;
-    background-color: #555;
+    color: black;
+    background-color:   yellow;
+}
+
+input[type="submit"]:hover,
+input[type="button"]:hover {
+    background-color: rgba(85, 85, 85, 0.65)
+}
+
+button:hover{
+    background-color: rgba(85, 85, 85, 0.65)
 }
 
 .content {
     padding: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 90%; /* Optional: Begrenze die maximale Breite des Inhalts */
 }

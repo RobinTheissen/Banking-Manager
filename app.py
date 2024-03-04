@@ -1,8 +1,5 @@
-import decimal
 import hashlib
 from datetime import timedelta, datetime
-from decimal import Decimal
-from chartjs import chartjs
 
 from data.Database.DatabaseManager import DatabaseManager
 from data.Handler.TextValidator import TextValidator
@@ -44,6 +41,7 @@ def register():
 
         if existing_email_count > 0:
             # Die E-Mail ist bereits in der Datenbank vorhanden, zeige eine Fehlermeldung
+
             error = "Die E-Mail ist bereits registriert. Bitte verwende eine andere E-Mail-Adresse."
 
         elif not text_validator.password_validation(request.form['password']):
@@ -345,7 +343,7 @@ def update_table_search():
 
         keyword = request.form['keyword']
         start_date = request.form['start_date']
-        end_date = request.form['end_date']
+        end_date = request.form['end_date'] + " 23:59:59"
         amount = request.form['amount']
         recipient = request.form['recipient']
 
