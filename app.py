@@ -28,6 +28,8 @@ def index():  # Startseite
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if 'customer' in session:
+        return render_template('accounts.html',)
     customer = Customer
     customer_id = None
     error = ""
@@ -86,6 +88,9 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
+    if 'customer' in session:
+        return render_template('accounts.html',)
+
     if request.method == 'POST':
         login_email = request.form['email']
         login_password = hashlib.sha256(request.form['password'].encode()).hexdigest()
@@ -108,6 +113,9 @@ def login_page():
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout_page():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     if request.method == 'POST':
         return render_template('index.html')
     else:
@@ -116,6 +124,9 @@ def logout_page():
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     if request.method == 'POST':
         db_manager = DatabaseManager()
 
@@ -134,6 +145,9 @@ def create_account():
 
 @app.route('/transaction', methods=['GET', 'POST'])
 def add_transaction():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     db_manager = DatabaseManager()
 
     accounts_data = db_manager.execute_query('SELECT accountid, accountname FROM accounts WHERE customerid = %s',
@@ -228,6 +242,9 @@ def add_transaction():
 
 @app.route('/accounts', methods=['GET', 'POST'])
 def accounts():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     initial = request.args.get('initial', False)
     # Verbindung zur Datenbank herstellen, um Konten abzurufen
     db_manager = DatabaseManager()
@@ -259,6 +276,9 @@ def accounts():
 
 @app.route('/update_table', methods=['GET'])
 def update_table():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     limit = request.args.get('limit', 15)  # Standardwert von 15, wenn keine Grenze angegeben ist
     account_id = request.args.get('account_id', None)
 
@@ -303,6 +323,9 @@ def update_table():
 
 @app.route('/categories', methods=['GET', 'POST'])
 def category_page():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     error_category = ""
     error_keyword = ""
     db_manager = DatabaseManager()
@@ -339,6 +362,9 @@ def category_page():
 
 @app.route('/update_table/search', methods=['POST'])
 def update_table_search():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     if request.method == 'POST':
 
         keyword = request.form['keyword']
@@ -401,40 +427,49 @@ def update_table_search():
 
 @app.route('/visual', methods=['GET', 'POST'])
 def visual():
-    db_manager = DatabaseManager()
-    customer_id = session['customer'][0]
-    transactions = db_manager.execute_query(
-        "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
-        "transactions.amount, transactions.recipient, transactions.description, categories.category "
-        "FROM accounts "
-        "JOIN transactions ON accounts.accountid = transactions.accountid "
-        "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
-        "WHERE accounts.customerid = %s "
-        "ORDER BY transactions.timestamp DESC",
-        (customer_id,)
-    ).fetchall()
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
+    if 'pie_chart_data' in session:
+        pie_chart_data = session.pop('pie_chart_data')
+    else:
+        db_manager = DatabaseManager()
+        customer_id = session['customer'][0]
+        transactions = db_manager.execute_query(
+            "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
+            "transactions.amount, transactions.recipient, transactions.description, categories.category "
+            "FROM accounts "
+            "JOIN transactions ON accounts.accountid = transactions.accountid "
+            "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
+            "WHERE accounts.customerid = %s "
+            "ORDER BY transactions.timestamp DESC",
+            (customer_id,)
+        ).fetchall()
 
-    category_totals = {'keine Kategorie': 0.00}
+        category_totals = {'keine Kategorie': 0.00}
 
-    for transaction in transactions:
-        category = transaction[5] if transaction[5] is not None else 'keine Kategorie'
-        amount = float(transaction[2])
+        for transaction in transactions:
+            category = transaction[5] if transaction[5] is not None else 'keine Kategorie'
+            amount = float(transaction[2])
 
-        if category in category_totals:
-            category_totals[category] += amount
-        else:
-            category_totals[category] = amount
+            if category in category_totals:
+                category_totals[category] += amount
+            else:
+                category_totals[category] = amount
 
-    labels = list(category_totals.keys())
-    values = list(category_totals.values())
+        labels = list(category_totals.keys())
+        values = list(category_totals.values())
 
-    pie_chart_data = {'labels': labels, 'values': values}
+        pie_chart_data = {'labels': labels, 'values': values}
 
-    return render_template('visual.html', transactions=transactions, pie_chart_data=pie_chart_data)
+    return render_template('visual.html', pie_chart_data=pie_chart_data)
 
 
 @app.route('/update_chart', methods=['POST'])
 def update_chart():
+    if 'customer' not in session:
+        return render_template('index.html',
+                               error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     start_date = request.form['start_date']
     end_date = request.form['end_date']
     print(start_date, end_date)
@@ -473,4 +508,8 @@ def update_chart():
     pie_chart_data = {'labels': labels, 'values': values}
     print(pie_chart_data)
 
-    return render_template('visual.html', transactions=transactions, pie_chart_data=pie_chart_data)
+    # Setze die aktualisierten Daten in der Session, damit sie auf der Seite verfügbar sind
+    session['pie_chart_data'] = pie_chart_data
+
+    # Führe einen Redirect auf die visual-Seite durch
+    return redirect(url_for('visual', pie_chart_data=pie_chart_data))
