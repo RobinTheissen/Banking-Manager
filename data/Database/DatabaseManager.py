@@ -1,11 +1,11 @@
 import psycopg2
 import os
-
 from psycopg2._psycopg import cursor
 
 
+# Marc Kluge
 class DatabaseManager:
-    def __init__(self):
+    def __init__(self):  # Stellt die Datenbankanbindung her
         self.conn = psycopg2.connect(
             host='localhost',
             database='postgres',

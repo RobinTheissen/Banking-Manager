@@ -1,6 +1,7 @@
 {% extends "vorlagen/main.html"  %}
 
 {% block content %}
+    <!--Robin Theissen-->
 <div>
     <h1>Login</h1>
     <form action="/login" method="POST">
@@ -13,7 +14,6 @@
 
         <input class="button"  type="submit" value="LOGIN" />
     </form>
-<!-- error happens if the login information did not match any user -->
     {% if error %}
         <p class="error"> {{ error }}
     {% endif %}

@@ -1,3 +1,4 @@
+/* Robin Theissen */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -8,4 +9,12 @@ th, td {
     padding: 5px;
     text-align: left;
     border-bottom: 1px solid #ddd;
+}
+
+#transactionTable tr:nth-child(odd) {
+    background-color: #9393a2;
+}
+
+#transactionTable tr:nth-child(even) {
+    background-color: #e1dddd;
 }

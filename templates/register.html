@@ -1,6 +1,7 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
+    <!--Robin Theissen-->
 
 <div class="container">
 <h3>Registrierung!</h3>
@@ -40,7 +41,7 @@
     <button type="submit" class="btn btn-primary">Registrieren!</button>
     </form>
 </div>
-<!-- error if a user with this email address already exists -->
+
     {% if error %}
         <p class="error"> {{ error }}
     {% endif %}
