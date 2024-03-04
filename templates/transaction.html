@@ -1,7 +1,7 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
-
+<!--Marc Kluge-->
 
 <form id="transactionForm" action="/transaction" method="post">
     <h1>Add Transaction</h1>
@@ -20,7 +20,7 @@
     <input type="text" id="recipient" name="recipient" required><br>
 
     <label for="description">Verwendungszweck:</label>
-    <textarea id="description" name="description" ></textarea><br>
+    <input id="description" name="description" ><br>
 
     <label for="categorySelect">Kategorie:</label>
             <select id="categorySelect" name="categorySelect" style="display: inline-block;">

@@ -1,6 +1,7 @@
 import psycopg2
 import os
 
+"""Erstellt alle für das Projekt erforderlichen Datenbanken"""
 
 conn = psycopg2.connect(
     host="localhost",

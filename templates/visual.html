@@ -1,6 +1,7 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
+    <!--Marc Kluge-->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <h1>Kontoeinträge</h1>
@@ -19,7 +20,6 @@
     </div>
 
     <script>
-        // Die Daten können direkt aus der Flask-Variable verwendet werden
         let pieChartData = {{ pie_chart_data | safe }};
 
         // Funktion zum Generieren von Farben

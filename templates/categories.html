@@ -1,6 +1,7 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
+    <!--Marc Kluge-->
 <div id="categoryForm">
     <form action="/categories" method="POST">
         <h2>Neue Kategorie erstellen</h2>
@@ -15,7 +16,7 @@
     {% endif %}
 
 
-    <form action="/categories" method="POST">
+    <form id=keywordForm" action="/categories" method="POST">
         <h2>Neues Schlagwort hinzufügen</h2>
         <label for="categorySelect">Kategorie:</label>
         <select id="categorySelect" name="categorySelect" required style="display: inline-block;">

@@ -1,7 +1,7 @@
 {% extends "vorlagen/main.html" %}
 
 {% block content %}
-
+<!--Robin Theissen & Marc Kluge-->
     {% if initial %}
         {% set limit=5 %}
         {% set initial = False %}
@@ -11,7 +11,7 @@
 
     <br>
 
-<form action="/accounts" method="post">
+<form id="accountForm" action="/accounts" method="post">
     <h1>Letzte Transaktionen</h1>
     <label for="accountSelect">Konto auswählen </label>
     <select id="accountSelect" name="accountSelect" style="display: inline-block">
@@ -46,20 +46,7 @@
     <input type="submit" id="search" value="Suchen">
 </form>
 
-
-    <br>
-
-    <style>
-        /* Ungerade Zeilen */
-        #transactionTable tr:nth-child(odd) {
-            background-color: #9393a2;  /* Farbe für ungerade Zeilen */
-        }
-
-        /* Gerade Zeilen */
-        #transactionTable tr:nth-child(even) {
-            background-color: #e1dddd;  /* Farbe für gerade Zeilen */
-        }
-    </style>
+    <!-- Script zum updaten der angezeigten Einträge -->
     <script>
         let limit = {{ limit }}
         let selectedAccountId;

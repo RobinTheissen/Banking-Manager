@@ -1,3 +1,4 @@
+/* Robin Theissen */
 #searchForm {
     max-width: 400px;
     margin: 20px auto;
@@ -54,6 +55,12 @@ input {
     width: calc(100% - 16px);
 }
 
+#accountForm select{
+    padding: 8px;
+    margin-bottom: 12px;
+    width: auto;
+}
+
 #createAccountForm{
     margin: 20px auto;
     padding: 75px;
@@ -68,4 +75,10 @@ input {
     background-color: #f4f4f4;
     border-radius: 8px;
     float: left;
+}
+
+#categorySelect{
+    padding: 8px;
+    margin-bottom: 12px;
+    width: calc(100% - 16px);
 }
