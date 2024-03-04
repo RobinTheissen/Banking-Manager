@@ -263,7 +263,7 @@ def accounts():
         "transactions.amount, transactions.recipient, transactions.description, categories.category "
         "FROM accounts "
         "JOIN transactions ON accounts.accountid = transactions.accountid "
-        "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "  # LEFT JOIN hinzugefügt
+        "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
         "WHERE accounts.customerid = %s "
         "ORDER BY transactions.timestamp DESC LIMIT %s",
         (session['customer'][0], 15)
@@ -369,7 +369,7 @@ def update_table_search():
 
         keyword = request.form['keyword']
         start_date = request.form['start_date']
-        end_date = request.form['end_date'] + " 23:59:59"
+        end_date = request.form['end_date']
         amount = request.form['amount']
         recipient = request.form['recipient']
 
@@ -398,7 +398,7 @@ def update_table_search():
 
         if end_date:
             where_conditions.append("AND transactions.timestamp <= %s")
-            params.append(end_date)
+            params.append(end_date + " 23:59:59")
 
         if amount:
             where_conditions.append("AND transactions.amount = %s")
@@ -472,24 +472,35 @@ def update_chart():
                                error="Ihre Session ist abgelaufen, bitte loggen Sie sich erneut ein.")
     start_date = request.form['start_date']
     end_date = request.form['end_date']
-    print(start_date, end_date)
-
     db_manager = DatabaseManager()
-    customer_id = session['customer'][0]
+
+    base_query = ("SELECT accounts.accountname, to_char(transactions.timestamp,"
+                  " 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
+                  "transactions.amount, transactions.recipient, transactions.description, categories.category "
+                  "FROM accounts "
+                  "JOIN transactions ON accounts.accountid = transactions.accountid "
+                  "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
+                  "WHERE accounts.customerid = %s ")
+
+    where_conditions = []
+    params = [session['customer'][0]]
+
+    if start_date:
+        where_conditions.append("AND transactions.timestamp >= %s")
+        params.append(start_date)
+
+    if end_date:
+        where_conditions.append("AND transactions.timestamp <= %s")
+        params.append(end_date + " 23:59:59")
+
+    # Erstelle die vollständige WHERE-Klausel
+    where_clause = " ".join(where_conditions) if where_conditions else ""
+
+    # Setze die vollständige SQL-Abfrage zusammen
+    sql_query = f"{base_query} {where_clause} ORDER BY transactions.timestamp DESC"
 
     # Änderungen in der SQL-Abfrage, um Einträge zwischen start_date und end_date zu erhalten
-    transactions = db_manager.execute_query(
-        "SELECT accounts.accountname, to_char(transactions.timestamp, 'DD.MM.YYYY HH24:MI') AS formatted_timestamp, "
-        "transactions.amount, transactions.recipient, transactions.description, categories.category "
-        "FROM accounts "
-        "JOIN transactions ON accounts.accountid = transactions.accountid "
-        "LEFT JOIN categories ON categories.categoryid = transactions.categoryid "
-        "WHERE accounts.customerid = %s "
-        "AND transactions.timestamp >= %s "
-        "AND transactions.timestamp <= %s ",
-        (customer_id, start_date, end_date + " 23:59:59")
-    ).fetchall()
-    print(transactions)
+    transactions = db_manager.execute_query(sql_query, params).fetchall()
 
     category_totals = {'keine Kategorie': 0.00}
 
@@ -506,7 +517,6 @@ def update_chart():
     values = list(category_totals.values())
 
     pie_chart_data = {'labels': labels, 'values': values}
-    print(pie_chart_data)
 
     # Setze die aktualisierten Daten in der Session, damit sie auf der Seite verfügbar sind
     session['pie_chart_data'] = pie_chart_data
